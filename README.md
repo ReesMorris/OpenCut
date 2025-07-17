@@ -1,160 +1,85 @@
-<table width="100%">
-  <tr>
-    <td align="left" width="120">
-      <img src="apps/web/public/logo.png" alt="OpenCut Logo" width="100" />
-    </td>
-    <td align="right">
-      <h1>OpenCut <span style="font-size: 0.7em; font-weight: normal;">(prev AppCut)</span></h1>
-      <h3 style="margin-top: -10px;">A free, open-source video editor for web, desktop, and mobile.</h3>
-    </td>
-  </tr>
-</table>
+# OpenCut (Containerized)
 
-## Why?
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.com/deploy/opencut?referralCode=rees)
 
-- **Privacy**: Your videos stay on your device
-- **Free features**: Every basic feature of CapCut is paywalled now
-- **Simple**: People want editors that are easy to use - CapCut proved that
+A containerized version of [OpenCut](https://github.com/OpenCut-app/OpenCut) - the free, open-source video editor. This template is designed for easy deployment on Railway, but can run anywhere Docker is supported.
 
-## Features
+## What is OpenCut?
 
+OpenCut is a privacy-focused, browser-based video editor that keeps your videos on your device. No watermarks, no subscriptions, just free video editing.
+
+**Features:**
 - Timeline-based editing
-- Multi-track support
+- Multi-track support  
 - Real-time preview
+- Client-side processing (files never leave your browser)
 - No watermarks or subscriptions
-- Analytics provided by [Databuddy](https://www.databuddy.cc?utm_source=opencut), 100% Anonymized & Non-invasive.
 
-## Project Structure
+## What This Template Provides
 
-- `apps/web/` – Main Next.js web application
-- `src/components/` – UI and editor components
-- `src/hooks/` – Custom React hooks
-- `src/lib/` – Utility and API logic
-- `src/stores/` – State management (Zustand, etc.)
-- `src/types/` – TypeScript types
+This fork makes a few key modifications to the original OpenCut project to enable easy deployment in a containerized environment:
 
-## Getting Started
+1. **Auth Configuration** - Fixed runtime environment variable handling for `BETTER_AUTH_URL`
+2. **Migration Support** - Added Drizzle migration files and dependencies to Docker image  
+3. **Build Optimization** - Configured standalone Next.js build for containerization
 
-### Prerequisites
+## Quick Deploy
 
-Before you begin, ensure you have the following installed on your system:
+Click the button above or use this template URL:
+```
+https://railway.com/deploy/opencut?referralCode=rees
+```
 
-- [Bun](https://bun.sh/docs/installation)
-- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
-- [Node.js](https://nodejs.org/en/) (for `npm` alternative)
+Railway will automatically:
+1. Create a PostgreSQL database
+2. Run database migrations
+3. Deploy the containerized application
+4. Provide you with a public URL
 
-### Setup
+## Environment Variables
 
-1. Fork the repository
-2. Clone your fork locally
-3. Navigate to the web app directory: `cd apps/web`
-4. Install dependencies: `bun install`
-5. Start the development server: `bun dev`
+The template configures these automatically, but for reference:
 
-## Development Setup
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `DATABASE_URL` | PostgreSQL connection string | *Set by Railway* |
+| `BETTER_AUTH_URL` | Base URL for authentication | *Your Railway domain* |
+| `BETTER_AUTH_SECRET` | Auth encryption secret | *Generated randomly* |
+| `UPSTASH_REDIS_REST_URL` | Redis connection URL | *Set by Railway* |
+| `UPSTASH_REDIS_REST_TOKEN` | Redis auth token | *Set by Railway* |
 
-### Prerequisites
+## Local Development
 
-- Node.js 18+
-- Bun (latest version)
-- Docker (for local database)
+To run this containerized version locally:
 
-### Local Development
+```bash
+# Clone this repository
+git clone https://github.com/ReesMorris/OpenCut.git
+cd OpenCut
 
-1. Start the database and Redis services:
+# Build the Docker image
+docker build -t opencut -f apps/web/Dockerfile .
 
-   ```bash
-   # From project root
-   docker-compose up -d
-   ```
+# Run with environment variables
+docker run -p 3000:3000 \
+  -e BETTER_AUTH_URL=http://localhost:3000 \
+  -e BETTER_AUTH_SECRET=your-secret-here \
+  -e DATABASE_URL=your-db-url \
+  opencut
+```
 
-2. Navigate to the web app directory:
+## Upstream Sync
 
-   ```bash
-   cd apps/web
-   ```
+This template stays synchronized with the main OpenCut repository. Major updates are merged regularly to ensure you get the latest features and fixes.
 
-3. Copy `.env.example` to `.env.local`:
+**Original Repository:** [OpenCut-app/OpenCut](https://github.com/OpenCut-app/OpenCut)
 
-   ```bash
-   # Unix/Linux/Mac
-   cp .env.example .env.local
+## Support
 
-   # Windows Command Prompt
-   copy .env.example .env.local
-
-   # Windows PowerShell
-   Copy-Item .env.example .env.local
-   ```
-
-4. Configure required environment variables in `.env.local`:
-
-   **Required Variables:**
-
-   ```bash
-   # Database (matches docker-compose.yaml)
-   DATABASE_URL="postgresql://opencut:opencutthegoat@localhost:5432/opencut"
-
-   # Generate a secure secret for Better Auth
-   BETTER_AUTH_SECRET="your-generated-secret-here"
-   BETTER_AUTH_URL="http://localhost:3000"
-
-   # Redis (matches docker-compose.yaml)
-   UPSTASH_REDIS_REST_URL="http://localhost:8079"
-   UPSTASH_REDIS_REST_TOKEN="example_token"
-
-   # Development
-   NODE_ENV="development"
-   ```
-
-   **Generate BETTER_AUTH_SECRET:**
-
-   ```bash
-   # Unix/Linux/Mac
-   openssl rand -base64 32
-
-   # Windows PowerShell (simple method)
-   [System.Web.Security.Membership]::GeneratePassword(32, 0)
-
-   # Cross-platform (using Node.js)
-   node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
-
-   # Or use an online generator: https://generate-secret.vercel.app/32
-   ```
-
-5. Run database migrations: `bun run db:migrate` from (inside apps/web)
-6. Start the development server: `bun run dev` from (inside apps/web)
-
-The application will be available at [http://localhost:3000](http://localhost:3000).
-
-## Contributing
-
-**Note**: We're currently moving at an extremely fast pace with rapid development and breaking changes. While we appreciate the interest, it's recommended to wait until the project stabilizes before contributing to avoid conflicts and wasted effort.
-
-## Visit [CONTRIBUTING.md](.github/CONTRIBUTING.md)
-
-We welcome contributions! Please see our [Contributing Guide](.github/CONTRIBUTING.md) for detailed setup instructions and development guidelines.
-
-**Quick start for contributors:**
-
-- Fork the repo and clone locally
-- Follow the setup instructions in CONTRIBUTING.md
-- Create a feature branch and submit a PR
-
-## Sponsors
-
-Thanks to [Vercel](https://vercel.com?utm_source=github-opencut&utm_campaign=oss) for their support of open-source software.
-
-<a href="https://vercel.com/oss">
-  <img alt="Vercel OSS Program" src="https://vercel.com/oss/program-badge.svg" />
-</a>
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FOpenCut-app%2FOpenCut&project-name=opencut&repository-name=opencut)
+- **Template Issues:** Post on the [template discussion board](https://station.railway.com/templates/open-cut-01b73deb)
+- **OpenCut Issues:** Report to the [main OpenCut repository](https://github.com/OpenCut-app/OpenCut/issues)
+- **Railway Issues:** Check [Railway's documentation](https://docs.railway.app/)
 
 ## License
 
-[MIT LICENSE](LICENSE)
-
----
-
-![Star History Chart](https://api.star-history.com/svg?repos=opencut-app/opencut&type=Date)
+This project maintains the same [MIT License](LICENSE) as the original OpenCut project.
