@@ -20,6 +20,7 @@ import { Play, Pause, Expand, SkipBack, SkipForward } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { formatTimeCode } from "@/lib/time";
+import { EditableTimecode } from "@/components/ui/editable-timecode";
 import { FONT_CLASS_MAP } from "@/lib/font-config";
 import { BackgroundSettings } from "../background-settings";
 import { useProjectStore } from "@/stores/project-store";
@@ -211,7 +212,7 @@ export function PreviewPanel() {
     setDragState({
       isDragging: true,
       elementId: element.id,
-      trackId: trackId,
+      trackId,
       startX: e.clientX,
       startY: e.clientY,
       initialElementX: element.x,
@@ -355,8 +356,22 @@ export function PreviewPanel() {
             handleTextMouseDown(e, element, elementData.track.id)
           }
           style={{
-            left: `${50 + ((dragState.isDragging && dragState.elementId === element.id ? dragState.currentX : element.x) / canvasSize.width) * 100}%`,
-            top: `${50 + ((dragState.isDragging && dragState.elementId === element.id ? dragState.currentY : element.y) / canvasSize.height) * 100}%`,
+            left: `${
+              50 +
+              ((dragState.isDragging && dragState.elementId === element.id
+                ? dragState.currentX
+                : element.x) /
+                canvasSize.width) *
+                100
+            }%`,
+            top: `${
+              50 +
+              ((dragState.isDragging && dragState.elementId === element.id
+                ? dragState.currentY
+                : element.y) /
+                canvasSize.height) *
+                100
+            }%`,
             transform: `translate(-50%, -50%) rotate(${element.rotation}deg) scale(${scaleRatio})`,
             opacity: element.opacity,
             zIndex: 100 + index, // Text elements on top
@@ -548,7 +563,7 @@ function FullscreenToolbar({
   toggle: () => void;
   getTotalDuration: () => number;
 }) {
-  const { isPlaying } = usePlaybackStore();
+  const { isPlaying, seek } = usePlaybackStore();
   const { activeProject } = useProjectStore();
   const [isDragging, setIsDragging] = useState(false);
 
@@ -608,9 +623,15 @@ function FullscreenToolbar({
       className="flex items-center gap-2 p-1 pt-2 w-full text-white"
     >
       <div className="flex items-center gap-1 text-[0.70rem] tabular-nums text-white/90">
-        <span className="text-primary">
-          {formatTimeCode(currentTime, "HH:MM:SS:FF", activeProject?.fps || 30)}
-        </span>
+        <EditableTimecode
+          time={currentTime}
+          duration={totalDuration}
+          format="HH:MM:SS:FF"
+          fps={activeProject?.fps || 30}
+          onTimeChange={seek}
+          disabled={!hasAnyElements}
+          className="text-white/90 hover:bg-white/10"
+        />
         <span className="opacity-50">/</span>
         <span>
           {formatTimeCode(
@@ -785,7 +806,7 @@ function PreviewToolbar({
   toggle: () => void;
   getTotalDuration: () => number;
 }) {
-  const { isPlaying } = usePlaybackStore();
+  const { isPlaying, seek } = usePlaybackStore();
   const { setCanvasSize, setCanvasSizeToOriginal } = useEditorStore();
   const { activeProject } = useProjectStore();
   const {
@@ -828,17 +849,18 @@ function PreviewToolbar({
       <div>
         <p
           className={cn(
-            "text-[0.75rem] text-muted-foreground flex items-center gap-1",
+            "text-[0.75rem] text-muted-foreground flex items-center gap-1 w-[10rem]",
             !hasAnyElements && "opacity-50"
           )}
         >
-          <span className="text-primary tabular-nums">
-            {formatTimeCode(
-              currentTime,
-              "HH:MM:SS:FF",
-              activeProject?.fps || 30
-            )}
-          </span>
+          <EditableTimecode
+            time={currentTime}
+            duration={getTotalDuration()}
+            format="HH:MM:SS:FF"
+            fps={activeProject?.fps || 30}
+            onTimeChange={seek}
+            disabled={!hasAnyElements}
+          />
           <span className="opacity-50">/</span>
           <span className="tabular-nums">
             {formatTimeCode(
