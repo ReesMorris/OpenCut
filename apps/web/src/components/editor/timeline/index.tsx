@@ -19,6 +19,7 @@ import {
   Link,
   ZoomIn,
   ZoomOut,
+  Bookmark,
 } from "lucide-react";
 import {
   Tooltip,
@@ -543,7 +544,7 @@ export function Timeline() {
         {/* Timeline Header with Ruler */}
         <div className="flex bg-panel sticky top-0 z-10">
           {/* Track Labels Header */}
-          <div className="w-48 flex-shrink-0 bg-panel border-r flex items-center justify-between px-3 py-2">
+          <div className="w-48 shrink-0 bg-panel border-r flex items-center justify-between px-3 py-2">
             {/* Empty space */}
             <span className="text-sm font-medium text-muted-foreground opacity-0">
               .
@@ -651,6 +652,30 @@ export function Timeline() {
                     );
                   }).filter(Boolean);
                 })()}
+                
+                {/* Bookmark markers */}
+                {(() => {
+                  const { activeProject } = useProjectStore.getState();
+                  if (!activeProject?.bookmarks?.length) return null;
+                  
+                  return activeProject.bookmarks.map((bookmarkTime, i) => (
+                                          <div
+                      key={`bookmark-${i}`}
+                      className="absolute top-0 h-10 w-0.5 !bg-primary cursor-pointer"
+                      style={{
+                        left: `${bookmarkTime * TIMELINE_CONSTANTS.PIXELS_PER_SECOND * zoomLevel}px`,
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        usePlaybackStore.getState().seek(bookmarkTime);
+                      }}
+                    >
+                      <div className="absolute top-[-1px] left-[-5px] text-primary">
+                        <Bookmark className="h-3 w-3 fill-primary" />
+                      </div>
+                    </div>
+                  ));
+                })()}
               </div>
             </ScrollArea>
           </div>
@@ -662,7 +687,7 @@ export function Timeline() {
           {tracks.length > 0 && (
             <div
               ref={trackLabelsRef}
-              className="w-48 flex-shrink-0 border-r border-black overflow-y-auto z-[200] bg-panel"
+              className="w-48 shrink-0 border-r border-black overflow-y-auto z-200 bg-panel"
               data-track-labels
             >
               <ScrollArea className="w-full h-full" ref={trackLabelsScrollRef}>
@@ -677,7 +702,7 @@ export function Timeline() {
                         <TrackIcon track={track} />
                       </div>
                       {track.muted && (
-                        <span className="ml-2 text-xs text-red-500 font-semibold flex-shrink-0">
+                        <span className="ml-2 text-xs text-red-500 font-semibold shrink-0">
                           Muted
                         </span>
                       )}
@@ -761,7 +786,7 @@ export function Timeline() {
                             />
                           </div>
                         </ContextMenuTrigger>
-                        <ContextMenuContent className="z-[200]">
+                        <ContextMenuContent className="z-200">
                           <ContextMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
@@ -773,6 +798,23 @@ export function Timeline() {
                           <ContextMenuItem onClick={(e) => e.stopPropagation()}>
                             Track settings (soon)
                           </ContextMenuItem>
+                          {activeProject?.bookmarks?.length && activeProject.bookmarks.length > 0 && (
+                            <>
+                              <ContextMenuItem disabled>Bookmarks</ContextMenuItem>
+                              {activeProject.bookmarks.map((bookmarkTime, i) => (
+                                <ContextMenuItem 
+                                  key={`bookmark-menu-${i}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    seek(bookmarkTime);
+                                  }}
+                                >
+                                  <Bookmark className="h-3 w-3 mr-2 inline-block" />
+                                  {bookmarkTime.toFixed(1)}s
+                                </ContextMenuItem>
+                              ))}
+                              </>
+                          )}
                         </ContextMenuContent>
                       </ContextMenu>
                     ))}
@@ -791,13 +833,13 @@ function TrackIcon({ track }: { track: TimelineTrack }) {
   return (
     <>
       {track.type === "media" && (
-        <Video className="w-4 h-4 flex-shrink-0 text-muted-foreground" />
+        <Video className="w-4 h-4 shrink-0 text-muted-foreground" />
       )}
       {track.type === "text" && (
-        <TypeIcon className="w-4 h-4 flex-shrink-0 text-muted-foreground" />
+        <TypeIcon className="w-4 h-4 shrink-0 text-muted-foreground" />
       )}
       {track.type === "audio" && (
-        <Music className="w-4 h-4 flex-shrink-0 text-muted-foreground" />
+        <Music className="w-4 h-4 shrink-0 text-muted-foreground" />
       )}
     </>
   );
@@ -828,6 +870,7 @@ function TimelineToolbar({
     toggleRippleEditing,
   } = useTimelineStore();
   const { currentTime, duration, isPlaying, toggle } = usePlaybackStore();
+  const { toggleBookmark, isBookmarked } = useProjectStore();
 
   // Action handlers
   const handleSplitSelected = () => {
@@ -957,6 +1000,13 @@ function TimelineToolbar({
   const handleZoomSliderChange = (values: number[]) => {
     setZoomLevel(values[0]);
   };
+  
+  const handleToggleBookmark = async () => {
+    await toggleBookmark(currentTime);
+  };
+  
+  // Check if the current time is bookmarked
+  const currentBookmarked = isBookmarked(currentTime);
   return (
     <div className="border-b flex items-center justify-between px-2 py-1">
       <div className="flex items-center gap-1 w-full">
@@ -1088,6 +1138,17 @@ function TimelineToolbar({
             </TooltipTrigger>
             <TooltipContent>Delete element (Delete)</TooltipContent>
           </Tooltip>
+          <div className="w-px h-6 bg-border mx-1" />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="text" size="icon" onClick={handleToggleBookmark}>
+                <Bookmark className={`h-4 w-4 ${currentBookmarked ? "fill-primary text-primary" : ""}`} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {currentBookmarked ? "Remove bookmark" : "Add bookmark"}
+            </TooltipContent>
+          </Tooltip>
         </TooltipProvider>
       </div>
       <div className="flex items-center gap-1">
@@ -1121,6 +1182,8 @@ function TimelineToolbar({
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
+
+        <div className="h-6 w-px bg-border mx-1" />
         <div className="flex items-center gap-1">
           <Button variant="text" size="icon" onClick={handleZoomOut}>
             <ZoomOut className="h-4 w-4" />
