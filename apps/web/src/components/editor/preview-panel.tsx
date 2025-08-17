@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { formatTimeCode } from "@/lib/time";
 import { EditableTimecode } from "@/components/ui/editable-timecode";
 import { FONT_CLASS_MAP } from "@/lib/font-config";
-import { DEFAULT_CANVAS_SIZE, useProjectStore } from "@/stores/project-store";
+import { DEFAULT_CANVAS_SIZE, DEFAULT_FPS, useProjectStore } from "@/stores/project-store";
 import { TextElementDragState } from "@/types/editor";
 import {
   Popover,
@@ -235,7 +235,7 @@ export function PreviewPanel() {
     const activeElements: ActiveElement[] = [];
 
     // Iterate tracks from bottom to top so topmost track renders last (on top)
-    ;[...tracks].reverse().forEach((track) => {
+    [...tracks].reverse().forEach((track) => {
       track.elements.forEach((element) => {
         if (element.hidden) return;
         const elementStart = element.startTime;
@@ -436,7 +436,7 @@ export function PreviewPanel() {
               trimStart={element.trimStart}
               trimEnd={element.trimEnd}
               clipDuration={element.duration}
-              trackMuted={elementData.track.muted}
+              trackMuted={element.muted || elementData.track.muted}
             />
           </div>
         );
@@ -462,14 +462,18 @@ export function PreviewPanel() {
       // Audio elements (no visual representation)
       if (mediaItem.type === "audio") {
         return (
-          <div key={element.id} className="absolute inset-0" style={{ pointerEvents: "none" }}>
+          <div
+            key={element.id}
+            className="absolute inset-0"
+            style={{ pointerEvents: "none" }}
+          >
             <AudioPlayer
               src={mediaItem.url!}
               clipStartTime={element.startTime}
               trimStart={element.trimStart}
               trimEnd={element.trimEnd}
               clipDuration={element.duration}
-              trackMuted={elementData.track.muted}
+              trackMuted={element.muted || elementData.track.muted}
             />
           </div>
         );
@@ -627,7 +631,7 @@ function FullscreenToolbar({
           time={currentTime}
           duration={totalDuration}
           format="HH:MM:SS:FF"
-          fps={activeProject?.fps || 30}
+          fps={activeProject?.fps || DEFAULT_FPS}
           onTimeChange={seek}
           disabled={!hasAnyElements}
           className="text-foreground/90 hover:bg-white/10"
@@ -637,7 +641,7 @@ function FullscreenToolbar({
           {formatTimeCode(
             totalDuration,
             "HH:MM:SS:FF",
-            activeProject?.fps || 30
+            activeProject?.fps || DEFAULT_FPS
           )}
         </span>
       </div>
